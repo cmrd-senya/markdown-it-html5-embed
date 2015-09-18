@@ -1,0 +1,26 @@
+{
+  "name": "markdown-it-html5-embed",
+  "version": "0.0.1",
+  "homepage": "https://github.com/cmrd-senya/markdown-it-html5-embed",
+  "authors": [
+    "comrade Senya <senya@riseup.net>"
+  ],
+  "description": "This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way using image embedding syntax ![](url). This is done by replacing standard image renderer of markdown-it.",
+  "main": "lib/index.js",
+  "moduleType": [
+    "node"
+  ],
+  "keywords": [
+    "markdown-it",
+    "markdown-it-plugin",
+    "html5"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
