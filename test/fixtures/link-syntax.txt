@@ -2,7 +2,7 @@ Video with link syntax:
 .
 [test link](https://example.com/file.webm)
 .
-<p><video width="320" height="240" class="audioplayer" controls>
+<p><video controls preload="metadata">
 <source type="video/webm" src=https://example.com/file.webm></source>
 </video></p>
 .
@@ -11,7 +11,7 @@ Video with link syntax (no text label):
 .
 [](https://example.com/file.webm)
 .
-<p><video width="320" height="240" class="audioplayer" controls>
+<p><video controls preload="metadata">
 <source type="video/webm" src=https://example.com/file.webm></source>
 </video></p>
 .

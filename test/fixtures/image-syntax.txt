@@ -7,6 +7,15 @@ Video with image syntax:
 </video></p>
 .
 
+Audio with image syntax:
+.
+![](https://example.com/file.ogg)
+.
+<p><audio width="320" controls class="audioplayer">
+<source type="audio/ogg" src=https://example.com/file.ogg></source>
+</audio></p>
+.
+
 Check usual image is not broken:
 .
 ![](https://example.com/file.png)
