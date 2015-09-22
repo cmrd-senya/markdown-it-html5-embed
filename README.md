@@ -21,7 +21,52 @@ var md = require('markdown-it')()
             }});
 
 md.render('![](http://example.com/file.webm)'); // => '<p><video width="320" height="240" class="audioplayer" controls>
-<source type="video/webm" src=http://example.com/file.webm></source>
-</video></p>'
+                                                //<source type="video/webm" src=http://example.com/file.webm></source>
+                                                //</video></p>'
 ```
 
+### Options
+
+####use_image_syntax
+
+Boolean. Enables video/audio embed with ```![]()``` syntax (default)
+
+####use_link_syntax
+
+Boolean. Enables video/audio embed with ```[]()``` syntax
+
+####attributes
+
+Hash array. Attribute to pass to audio/video tag. Example:
+
+```
+    attributes: {
+      'audio': 'width="320" controls class="audioplayer"',
+      'video': 'width="320" height="240" class="audioplayer" controls'
+    }
+```
+
+If not specified, the default value of ```controls preload="metadata"``` is used.
+
+####is_allowed_mime_type
+
+Function. If specified, allows to decided basing on the MIME type, wheter to embed element or not. If not, all audio/video content is embedded. In a web browser you can use following code to embed only supported media type:
+```
+      is_allowed_mime_type: function(mimetype) {
+        var v = document.createElement(mimetype[1]);
+        return v.canPlayType && v.canPlayType(mimetype[0]) !== '';
+      }
+```
+This way, all unsupported media will be rendered with defualt renderer (e.g., as a link, if ```use_link_syntax``` is true).
+
+The argument is a result of regexp match, and has a structure similar to that one:
+```
+[ 'audio/mpeg',
+  'audio',
+  index: 0,
+  input: 'audio/mpeg' ]
+```
+
+## Credits
+
+Based on [the code](http://talk.commonmark.org/t/embedded-audio-and-video/441/16) written by @v3ss0n.
