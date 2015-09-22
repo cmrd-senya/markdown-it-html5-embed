@@ -19,5 +19,8 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/cmrd-senya/markdown-it-html5-embed/issues"
+  },
+  "dependencies": {
+    "mimoza": "~1.0.0"
   }
 }

@@ -18,9 +18,9 @@ Video with link syntax (no text label):
 
 Check usual link is not broken:
 .
-[test link](https://example.com/file.png)
+[test link](https://example.com/file.php)
 .
-<p><a href="https://example.com/file.png">test link</a></p>
+<p><a href="https://example.com/file.php">test link</a></p>
 .
 
 
