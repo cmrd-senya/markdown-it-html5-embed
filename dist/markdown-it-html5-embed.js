@@ -25,10 +25,14 @@ function clear_tokens(tokens, idx) {
 function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender) {
   var token = tokens[idx];
   var isLink;
+  var title;
   var aIndex = token.attrIndex('src');
   if(aIndex < 0) {
     aIndex = token.attrIndex('href');
     isLink = true;
+    title = tokens[idx+1].content;
+  } else {
+    title = token.attrs[token.attrIndex('alt')][1];
   }
 //  console.log('aindex of idx' + idx);
 //  console.log(aIndex);
@@ -45,6 +49,9 @@ function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender
     if(isLink) {
       clear_tokens(tokens, idx+1);
     }
+    if(!title) {
+      title = "untitled " + media_type;
+    }
     if(typeof options.html5embed.attributes === "undefined"){
       options.html5embed.attributes = {};
     }
@@ -53,6 +60,7 @@ function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender
     }
     return ['<' + media_type +' ' + options.html5embed.attributes[media_type] + '>',
       '<source type="' + mimetype + '" src=' + token.attrs[aIndex][1] + '></source>',
+      title,
       '</' + media_type + '>'
     ].join('\n');
   }else {

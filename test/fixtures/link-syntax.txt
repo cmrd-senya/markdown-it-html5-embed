@@ -4,6 +4,7 @@ Video with link syntax:
 .
 <p><video controls preload="metadata">
 <source type="video/webm" src=https://example.com/file.webm></source>
+test link
 </video></p>
 .
 
@@ -13,6 +14,7 @@ Video with link syntax (no text label):
 .
 <p><video controls preload="metadata">
 <source type="video/webm" src=https://example.com/file.webm></source>
+untitled video
 </video></p>
 .
 

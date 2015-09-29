@@ -11,6 +11,7 @@ MP3 is allowed
 .
 <p><audio controls preload="metadata">
 <source type="audio/mpeg" src=https://example.com/file.mp3></source>
+untitled audio
 </audio></p>
 .
 
@@ -20,6 +21,7 @@ OGV is allowed
 .
 <p><video controls preload="metadata">
 <source type="video/ogg" src=https://example.com/file.ogv></source>
+test link
 </video></p>
 .
 
