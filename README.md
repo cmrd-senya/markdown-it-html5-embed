@@ -67,6 +67,10 @@ The argument is a result of regexp match, and has a structure similar to that on
   input: 'audio/mpeg' ]
 ```
 
+####templateName
+
+String. If the plugin is used in a Rails asset pipeline along with the handlebars_assets gem, then you can use a Handlebars template to control the output of the plugin. This option specifies the name of the template to use, which will be picked from the HandlebarsTemplates array.
+
 ## Credits
 
 Based on [the code](http://talk.commonmark.org/t/embedded-audio-and-video/441/16) written by @v3ss0n.
