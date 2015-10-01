@@ -37,3 +37,20 @@ describe('markdown-it-html5-embed', function() {
   generate(path.join(__dirname, 'fixtures/mime-filter.txt'), md);
 });
 
+describe('markdown-it-html5-embed with handlebars', function() {
+  before(function (){
+    var Handlebars = require("handlebars");
+    global.HandlebarsTemplates = {"template": Handlebars.compile(  "<h1>{{title}}</h1><div class=\"body\"><{{media_type}} {{attributes}}><source type=\"{{mimetype}}\" src=\"{{source_url}}\"/></{{media_type}}></div>")};
+  });
+
+  var option = { html5embed: {
+    use_link_syntax: true,
+    templateName: "template",
+    attributes: ""
+  } };
+
+  var md = require('markdown-it')().use(require('../lib'), option);
+
+  generate(path.join(__dirname, 'fixtures/with-handlebars.txt'), md);
+});
+
