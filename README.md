@@ -16,22 +16,23 @@ bower install markdown-it-html5-embed --save
 var md = require('markdown-it')()
             .use(require('markdown-it-html5-embed'), {
               html5embed: {
-                use_image_syntax: true, // Enables video/audio embed with ![]() syntax (default)
-                use_link_syntax: true   // Enables video/audio embed with []() syntax
+                useImageSyntax: true, // Enables video/audio embed with ![]() syntax (default)
+                useLinkSyntax: true   // Enables video/audio embed with []() syntax
             }});
 
 md.render('![](http://example.com/file.webm)'); // => '<p><video width="320" height="240" class="audioplayer" controls>
-                                                //<source type="video/webm" src=http://example.com/file.webm></source>
-                                                //</video></p>'
+                                                // <source type="video/webm" src=https://example.com/file.webm></source>
+                                                // untitled video
+                                                // </video></p>'
 ```
 
 ### Options
 
-####use_image_syntax
+####useImageSyntax (or use_image_syntax)
 
 Boolean. Enables video/audio embed with ```![]()``` syntax (default)
 
-####use_link_syntax
+####useLinkSyntax (or use_link_syntax)
 
 Boolean. Enables video/audio embed with ```[]()``` syntax
 
@@ -48,7 +49,7 @@ Hash array. Attribute to pass to audio/video tag. Example:
 
 If not specified, the default value of ```controls preload="metadata"``` is used.
 
-####is_allowed_mime_type
+####isAllowedMimeType (or is_allowed_mime_type)
 
 Function. If specified, allows to decided basing on the MIME type, wheter to embed element or not. If not, all audio/video content is embedded. In a web browser you can use following code to embed only supported media type:
 ```

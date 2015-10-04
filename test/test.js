@@ -27,8 +27,8 @@ describe('markdown-it-html5-embed', function() {
 
 describe('markdown-it-html5-embed', function() {
   var option = { html5embed: {
-    use_link_syntax: true,
-    is_allowed_mime_type: function(mimetype) {
+    useLinkSyntax: true,
+    isAllowedMimeType: function(mimetype) {
       return (mimetype[0] == 'audio/mpeg') || (mimetype[0] == 'video/ogg');
     }
   } };
@@ -44,7 +44,7 @@ describe('markdown-it-html5-embed with handlebars', function() {
   });
 
   var option = { html5embed: {
-    use_link_syntax: true,
+    useLinkSyntax: true,
     templateName: "template",
     attributes: ""
   } };
