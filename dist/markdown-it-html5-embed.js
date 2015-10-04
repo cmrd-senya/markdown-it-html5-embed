@@ -44,7 +44,7 @@ function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender
   var mimetype_matches = RE.exec(mimetype);
 
   if(mimetype_matches !== null &&
-      (!options.html5embed.is_allowed_mime_type || options.html5embed.is_allowed_mime_type(mimetype_matches))) {
+      (!options.html5embed.isAllowedMimeType || options.html5embed.isAllowedMimeType(mimetype_matches))) {
     var media_type = mimetype_matches[1];
     if(isLink) {
       clear_tokens(tokens, idx+1);
@@ -59,7 +59,7 @@ function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender
       options.html5embed.attributes[media_type] = 'controls preload="metadata"';
     }
     if(options.html5embed.templateName) {
-      if(!HandlebarsTemplates) {
+      if(typeof HandlebarsTemplates === "undefined") {
         console.log("handlebars_assets is not on the assets pipeline; fall back to the usual mode");
       } else {
         return HandlebarsTemplates[options.html5embed.templateName]({
@@ -86,11 +86,23 @@ function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender
 module.exports = function html5_embed_plugin(md, options) {
   if(!options) {
     options = { html5embed: {
-      use_image_syntax: true
+      useImageSyntax: true
     } };
   }
 
-  if(options.html5embed.use_image_syntax) {
+  if(typeof options.html5embed.useImageSyntax === "undefined") {
+    options.html5embed.useImageSyntax = options.html5embed.use_image_syntax;
+  }
+
+  if(typeof options.html5embed.useLinkSyntax === "undefined") {
+    options.html5embed.useLinkSyntax = options.html5embed.use_link_syntax;
+  }
+
+  if(typeof options.html5embed.isAllowedMimeType === "undefined") {
+    options.html5embed.isAllowedMimeType = options.html5embed.is_allowed_mime_type;
+  }
+
+  if(options.html5embed.useImageSyntax) {
     var defaultRender = md.renderer.rules.image;
     md.renderer.rules.image = function(tokens, idx, opt, env, self) {
       opt.html5embed = options.html5embed;
@@ -98,7 +110,7 @@ module.exports = function html5_embed_plugin(md, options) {
     }
   }
 
-  if(options.html5embed.use_link_syntax) {
+  if(options.html5embed.useLinkSyntax) {
     var defaultRender = md.renderer.rules.link_open || function(tokens, idx, options, env, self) {
       return self.renderToken(tokens, idx, options);
     };
