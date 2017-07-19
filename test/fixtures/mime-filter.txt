@@ -10,7 +10,7 @@ MP3 is allowed
 [](https://example.com/file.mp3)
 .
 <p><audio controls preload="metadata">
-<source type="audio/mpeg" src=https://example.com/file.mp3></source>
+<source type="audio/mpeg" src="https://example.com/file.mp3"></source>
 untitled audio
 </audio></p>
 .
@@ -20,7 +20,7 @@ OGV is allowed
 [test link](https://example.com/file.ogv)
 .
 <p><video controls preload="metadata">
-<source type="video/ogg" src=https://example.com/file.ogv></source>
+<source type="video/ogg" src="https://example.com/file.ogv"></source>
 test link
 </video></p>
 .
