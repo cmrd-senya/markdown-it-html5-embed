@@ -46,7 +46,10 @@ describe('markdown-it-html5-embed with handlebars', function() {
   var option = { html5embed: {
     useLinkSyntax: true,
     templateName: "template",
-    attributes: ""
+    attributes: {
+      "video": "",
+      "audio": ""
+    }
   } };
 
   var md = require('markdown-it')().use(require('../lib'), option);
