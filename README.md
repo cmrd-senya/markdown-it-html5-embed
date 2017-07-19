@@ -28,15 +28,15 @@ md.render('![](http://example.com/file.webm)'); // => '<p><video width="320" hei
 
 ### Options
 
-####useImageSyntax (or use_image_syntax)
+#### useImageSyntax (or use_image_syntax)
 
 Boolean. Enables video/audio embed with ```![]()``` syntax (default)
 
-####useLinkSyntax (or use_link_syntax)
+#### useLinkSyntax (or use_link_syntax)
 
 Boolean. Enables video/audio embed with ```[]()``` syntax
 
-####attributes
+#### attributes
 
 Hash array. Attribute to pass to audio/video tag. Example:
 
@@ -49,7 +49,7 @@ Hash array. Attribute to pass to audio/video tag. Example:
 
 If not specified, the default value of ```controls preload="metadata"``` is used.
 
-####isAllowedMimeType (or is_allowed_mime_type)
+#### isAllowedMimeType (or is_allowed_mime_type)
 
 Function. If specified, allows to decided basing on the MIME type, wheter to embed element or not. If not, all audio/video content is embedded. In a web browser you can use following code to embed only supported media type:
 ```
@@ -68,10 +68,10 @@ The argument is a result of regexp match, and has a structure similar to that on
   input: 'audio/mpeg' ]
 ```
 
-####templateName
+#### templateName
 
 String. If the plugin is used in a Rails asset pipeline along with the handlebars_assets gem, then you can use a Handlebars template to control the output of the plugin. This option specifies the name of the template to use, which will be picked from the HandlebarsTemplates array.
 
 ## Credits
 
-Based on [the code](http://talk.commonmark.org/t/embedded-audio-and-video/441/16) written by @v3ss0n.
+Based on [the code](http://talk.commonmark.org/t/embedded-audio-and-video/441/16) written by [v3ss0n](https://github.com/v3ss0n).
