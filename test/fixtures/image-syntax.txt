@@ -25,4 +25,13 @@ Check usual image is not broken:
 <p><img src="https://example.com/file.png" alt=""></p>
 .
 
+Video with image syntax and title:
+.
+![some fancy title](https://example.com/file.webm)
+.
+<p><video width="320" height="240" class="audioplayer" controls>
+<source type="video/webm" src="https://example.com/file.webm"></source>
+some fancy title
+</video></p>
+.
 
