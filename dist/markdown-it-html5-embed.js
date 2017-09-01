@@ -1,13 +1,13 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.markdownitHTML5Embed = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /*! markdown-it-html5-embed https://github.com/cmrd-senya/markdown-it-html5-embed @license MIT */
-// This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way with ![](url) syntax.
-// The code is originally taken from http://talk.commonmark.org/t/embedded-audio-and-video/441/16
+// This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way.
 
 'use strict';
 
 var Mimoza = require('mimoza');
+var assign = require("lodash.assign");
 
-function clear_tokens(tokens, idx) {
+function clearTokens(tokens, idx) {
   for(var i = idx; i < tokens.length; i++) {
     switch(tokens[i].type) {
       case 'link_close':
@@ -22,106 +22,833 @@ function clear_tokens(tokens, idx) {
   }
 }
 
-function html5_embed_renderer(tokens, idx, options, env, renderer, defaultRender) {
+function parseToken(tokens, idx) {
+  var parsed = {};
   var token = tokens[idx];
-  var isLink;
-  var title;
-  var aIndex = token.attrIndex('src');
-  if(aIndex < 0) {
-    aIndex = token.attrIndex('href');
-    isLink = true;
-    title = tokens[idx+1].content;
-  } else {
-    title = token.content;
-  }
-//  console.log('aindex of idx' + idx);
-//  console.log(aIndex);
-  if(typeof Mimoza === "undefined") {
-    Mimoza = require('mimoza');
-  }
-  var mimetype = Mimoza.getMimeType(token.attrs[aIndex][1]);
-  var RE = /^(audio|video)\/.*/gi;
-  var mimetype_matches = RE.exec(mimetype);
 
-  if(mimetype_matches !== null &&
-      (!options.html5embed.isAllowedMimeType || options.html5embed.isAllowedMimeType(mimetype_matches))) {
-    var media_type = mimetype_matches[1];
-    if(isLink) {
-      clear_tokens(tokens, idx+1);
+  var aIndex = token.attrIndex('src');
+  parsed.isLink = aIndex < 0;
+  if(parsed.isLink) {
+    aIndex = token.attrIndex('href');
+    parsed.title = tokens[idx+1].content;
+  } else {
+    parsed.title = token.content;
+  }
+
+  parsed.url = token.attrs[aIndex][1];
+  parsed.mimeType = Mimoza.getMimeType(parsed.url);
+  var RE = /^(audio|video)\/.*/gi;
+  var mimetype_matches = RE.exec(parsed.mimeType);
+  if(mimetype_matches === null) {
+    parsed.mediaType = null;
+  } else {
+    parsed.mediaType = mimetype_matches[1];
+
+    if(!parsed.title) {
+      parsed.title = "untitled " + parsed.mediaType;
     }
-    if(!title) {
-      title = "untitled " + media_type;
+  }
+  return parsed;
+}
+
+function isAllowedMimeType(parsed, options) {
+  return parsed.mediaType !== null &&
+    (!options.isAllowedMimeType || options.isAllowedMimeType([parsed.mimeType, parsed.mediaType]));
+}
+
+function renderMediaEmbed(parsed, options) {
+  var attributes = options.attributes[parsed.mediaType];
+  var useHandlebars = false;
+
+  if(options.templateName) {
+    if (typeof HandlebarsTemplates === "undefined") {
+      console.log("handlebars_assets is not on the assets pipeline; fall back to the usual mode");
+    } else {
+      useHandlebars = true;
     }
-    if(typeof options.html5embed.attributes === "undefined"){
-      options.html5embed.attributes = {};
-    }
-    if(typeof options.html5embed.attributes[media_type] === "undefined") {
-      options.html5embed.attributes[media_type] = 'controls preload="metadata"';
-    }
-    if(options.html5embed.templateName) {
-      if(typeof HandlebarsTemplates === "undefined") {
-        console.log("handlebars_assets is not on the assets pipeline; fall back to the usual mode");
-      } else {
-        return HandlebarsTemplates[options.html5embed.templateName]({
-          media_type: media_type,
-          attributes: options.html5embed.attributes[media_type],
-          mimetype: mimetype,
-          source_url: token.attrs[aIndex][1],
-          title: title,
-          needs_cover: media_type==="video"
-        });
-      }
-    }
-    return ['<' + media_type +' ' + options.html5embed.attributes[media_type] + '>',
-      '<source type="' + mimetype + '" src="' + token.attrs[aIndex][1] + '"></source>',
-      title,
-      '</' + media_type + '>'
+  }
+
+  if(useHandlebars) {
+    return HandlebarsTemplates[options.templateName]({
+      media_type: parsed.mediaType,
+      attributes: attributes,
+      mimetype: parsed.mimeType,
+      source_url: parsed.url,
+      title: parsed.title,
+      needs_cover: parsed.mediaType==="video"
+    });
+  } else {
+    return ['<' + parsed.mediaType + ' ' + attributes + '>',
+      '<source type="' + parsed.mimeType + '" src="' + parsed.url + '"></source>',
+      parsed.title,
+      '</' + parsed.mediaType + '>'
     ].join('\n');
-  }else {
-    return defaultRender(tokens, idx, options, env, renderer);
   }
 }
 
+function html5EmbedRenderer(tokens, idx, options, env, renderer, defaultRender) {
+  var parsed = parseToken(tokens, idx);
+
+  if(!isAllowedMimeType(parsed, options.html5embed)) {
+    return defaultRender(tokens, idx, options, env, renderer);
+  }
+
+  if(parsed.isLink) {
+    clearTokens(tokens, idx+1);
+  }
+
+  return renderMediaEmbed(parsed, options.html5embed);
+}
+
+function forEachLinkOpen(state, action) {
+  state.tokens.forEach(function(token, _idx, _tokens) {
+    if(token.type === "inline") {
+      token.children.forEach(function(token, idx, tokens) {
+        if(token.type === "link_open") {
+          action(tokens, idx);
+        }
+      });
+    }
+  });
+}
+
+function findDirective(state, startLine, _endLine, silent, regexp, build_token) {
+  var pos = state.bMarks[startLine] + state.tShift[startLine];
+  var max = state.eMarks[startLine];
+
+  // Detect directive markdown
+  var currentLine = state.src.substring(pos, max);
+  var match = regexp.exec(currentLine);
+  if (match === null || match.length < 1) {
+    return false;
+  }
+
+  if (silent) {
+    return true;
+  }
+
+  state.line = startLine + 1;
+
+  // Build content
+  var token = build_token();
+  token.map = [ startLine, state.line];
+  token.markup = currentLine;
+
+  return true;
+}
 
 module.exports = function html5_embed_plugin(md, options) {
-  if(!options) {
-    options = { html5embed: {
-      useImageSyntax: true
-    } };
+  var gstate;
+  var defaults = {
+    attributes: {
+      audio: 'controls preload="metadata"',
+      video: 'controls preload="metadata"'
+    },
+    useImageSyntax: true,
+    inline: true,
+    autoAppend: false,
+    embedPlaceDirectiveRegexp: /^\[\[html5media\]\]/im
+  };
+  var options = assign({}, defaults, options.html5embed);
+
+  if(!options.inline) {
+    md.block.ruler.before("paragraph", "html5embed", function(state, startLine, endLine, silent) {
+      return findDirective(state, startLine, endLine, silent, options.embedPlaceDirectiveRegexp, function() {
+        return state.push("html5media", "html5media", 0);
+      });
+    });
+
+    md.renderer.rules.html5media = function(tokens, index) {
+      var result = "";
+      forEachLinkOpen(gstate, function(tokens, idx) {
+        var parsed = parseToken(tokens, idx);
+
+        if(!isAllowedMimeType(parsed, options)) {
+          return;
+        }
+
+        result += renderMediaEmbed(parsed, options);
+      });
+      if(result.length) {
+        result += "\n";
+      }
+      return result;
+    };
+
+    // Catch all the tokens for iteration later
+    md.core.ruler.push("grab_state", function(state) {
+      gstate = state;
+
+      if(options.autoAppend) {
+        var token = new state.Token("html5media", "", 0);
+        state.tokens.push(token);
+      }
+    });
   }
 
-  if(typeof options.html5embed.useImageSyntax === "undefined") {
-    options.html5embed.useImageSyntax = options.html5embed.use_image_syntax;
+  if(typeof options.isAllowedMimeType === "undefined") {
+    options.isAllowedMimeType = options.is_allowed_mime_type;
   }
 
-  if(typeof options.html5embed.useLinkSyntax === "undefined") {
-    options.html5embed.useLinkSyntax = options.html5embed.use_link_syntax;
-  }
-
-  if(typeof options.html5embed.isAllowedMimeType === "undefined") {
-    options.html5embed.isAllowedMimeType = options.html5embed.is_allowed_mime_type;
-  }
-
-  if(options.html5embed.useImageSyntax) {
+  if(options.inline && options.useImageSyntax) {
     var defaultRender = md.renderer.rules.image;
     md.renderer.rules.image = function(tokens, idx, opt, env, self) {
-      opt.html5embed = options.html5embed;
-      return html5_embed_renderer(tokens, idx, opt, env, self, defaultRender);
+      opt.html5embed = options;
+      return html5EmbedRenderer(tokens, idx, opt, env, self, defaultRender);
     }
   }
 
-  if(options.html5embed.useLinkSyntax) {
+  if(options.inline && options.useLinkSyntax) {
     var defaultRender = md.renderer.rules.link_open || function(tokens, idx, options, env, self) {
       return self.renderToken(tokens, idx, options);
     };
     md.renderer.rules.link_open = function(tokens, idx, opt, env, self) {
-      opt.html5embed = options.html5embed;
-      return html5_embed_renderer(tokens, idx, opt, env, self, defaultRender);
+      opt.html5embed = options;
+      return html5EmbedRenderer(tokens, idx, opt, env, self, defaultRender);
     };
   }
 };
 
-},{"mimoza":2}],2:[function(require,module,exports){
+},{"lodash.assign":2,"mimoza":3}],2:[function(require,module,exports){
+/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]';
+
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+/**
+ * A faster alternative to `Function#apply`, this function invokes `func`
+ * with the `this` binding of `thisArg` and the arguments of `args`.
+ *
+ * @private
+ * @param {Function} func The function to invoke.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} args The arguments to invoke `func` with.
+ * @returns {*} Returns the result of `func`.
+ */
+function apply(func, thisArg, args) {
+  switch (args.length) {
+    case 0: return func.call(thisArg);
+    case 1: return func.call(thisArg, args[0]);
+    case 2: return func.call(thisArg, args[0], args[1]);
+    case 3: return func.call(thisArg, args[0], args[1], args[2]);
+  }
+  return func.apply(thisArg, args);
+}
+
+/**
+ * The base implementation of `_.times` without support for iteratee shorthands
+ * or max array length checks.
+ *
+ * @private
+ * @param {number} n The number of times to invoke `iteratee`.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the array of results.
+ */
+function baseTimes(n, iteratee) {
+  var index = -1,
+      result = Array(n);
+
+  while (++index < n) {
+    result[index] = iteratee(index);
+  }
+  return result;
+}
+
+/**
+ * Creates a unary function that invokes `func` with its argument transformed.
+ *
+ * @private
+ * @param {Function} func The function to wrap.
+ * @param {Function} transform The argument transform.
+ * @returns {Function} Returns the new function.
+ */
+function overArg(func, transform) {
+  return function(arg) {
+    return func(transform(arg));
+  };
+}
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Built-in value references. */
+var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeKeys = overArg(Object.keys, Object),
+    nativeMax = Math.max;
+
+/** Detect if properties shadowing those on `Object.prototype` are non-enumerable. */
+var nonEnumShadows = !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf');
+
+/**
+ * Creates an array of the enumerable property names of the array-like `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @param {boolean} inherited Specify returning inherited property names.
+ * @returns {Array} Returns the array of property names.
+ */
+function arrayLikeKeys(value, inherited) {
+  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+  // Safari 9 makes `arguments.length` enumerable in strict mode.
+  var result = (isArray(value) || isArguments(value))
+    ? baseTimes(value.length, String)
+    : [];
+
+  var length = result.length,
+      skipIndexes = !!length;
+
+  for (var key in value) {
+    if ((inherited || hasOwnProperty.call(value, key)) &&
+        !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * Assigns `value` to `key` of `object` if the existing value is not equivalent
+ * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * for equality comparisons.
+ *
+ * @private
+ * @param {Object} object The object to modify.
+ * @param {string} key The key of the property to assign.
+ * @param {*} value The value to assign.
+ */
+function assignValue(object, key, value) {
+  var objValue = object[key];
+  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+      (value === undefined && !(key in object))) {
+    object[key] = value;
+  }
+}
+
+/**
+ * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeys(object) {
+  if (!isPrototype(object)) {
+    return nativeKeys(object);
+  }
+  var result = [];
+  for (var key in Object(object)) {
+    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @returns {Function} Returns the new function.
+ */
+function baseRest(func, start) {
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
+
+    while (++index < length) {
+      array[index] = args[start + index];
+    }
+    index = -1;
+    var otherArgs = Array(start + 1);
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = array;
+    return apply(func, this, otherArgs);
+  };
+}
+
+/**
+ * Copies properties of `source` to `object`.
+ *
+ * @private
+ * @param {Object} source The object to copy properties from.
+ * @param {Array} props The property identifiers to copy.
+ * @param {Object} [object={}] The object to copy properties to.
+ * @param {Function} [customizer] The function to customize copied values.
+ * @returns {Object} Returns `object`.
+ */
+function copyObject(source, props, object, customizer) {
+  object || (object = {});
+
+  var index = -1,
+      length = props.length;
+
+  while (++index < length) {
+    var key = props[index];
+
+    var newValue = customizer
+      ? customizer(object[key], source[key], key, object, source)
+      : undefined;
+
+    assignValue(object, key, newValue === undefined ? source[key] : newValue);
+  }
+  return object;
+}
+
+/**
+ * Creates a function like `_.assign`.
+ *
+ * @private
+ * @param {Function} assigner The function to assign values.
+ * @returns {Function} Returns the new assigner function.
+ */
+function createAssigner(assigner) {
+  return baseRest(function(object, sources) {
+    var index = -1,
+        length = sources.length,
+        customizer = length > 1 ? sources[length - 1] : undefined,
+        guard = length > 2 ? sources[2] : undefined;
+
+    customizer = (assigner.length > 3 && typeof customizer == 'function')
+      ? (length--, customizer)
+      : undefined;
+
+    if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+      customizer = length < 3 ? undefined : customizer;
+      length = 1;
+    }
+    object = Object(object);
+    while (++index < length) {
+      var source = sources[index];
+      if (source) {
+        assigner(object, source, index, customizer);
+      }
+    }
+    return object;
+  });
+}
+
+/**
+ * Checks if `value` is a valid array-like index.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+ * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ */
+function isIndex(value, length) {
+  length = length == null ? MAX_SAFE_INTEGER : length;
+  return !!length &&
+    (typeof value == 'number' || reIsUint.test(value)) &&
+    (value > -1 && value % 1 == 0 && value < length);
+}
+
+/**
+ * Checks if the given arguments are from an iteratee call.
+ *
+ * @private
+ * @param {*} value The potential iteratee value argument.
+ * @param {*} index The potential iteratee index or key argument.
+ * @param {*} object The potential iteratee object argument.
+ * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
+ *  else `false`.
+ */
+function isIterateeCall(value, index, object) {
+  if (!isObject(object)) {
+    return false;
+  }
+  var type = typeof index;
+  if (type == 'number'
+        ? (isArrayLike(object) && isIndex(index, object.length))
+        : (type == 'string' && index in object)
+      ) {
+    return eq(object[index], value);
+  }
+  return false;
+}
+
+/**
+ * Checks if `value` is likely a prototype object.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+ */
+function isPrototype(value) {
+  var Ctor = value && value.constructor,
+      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+  return value === proto;
+}
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+function isArguments(value) {
+  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+/**
+ * This method is like `_.isArrayLike` except that it also checks if `value`
+ * is an object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array-like object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArrayLikeObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLikeObject(document.body.children);
+ * // => true
+ *
+ * _.isArrayLikeObject('abc');
+ * // => false
+ *
+ * _.isArrayLikeObject(_.noop);
+ * // => false
+ */
+function isArrayLikeObject(value) {
+  return isObjectLike(value) && isArrayLike(value);
+}
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Assigns own enumerable string keyed properties of source objects to the
+ * destination object. Source objects are applied from left to right.
+ * Subsequent sources overwrite property assignments of previous sources.
+ *
+ * **Note:** This method mutates `object` and is loosely based on
+ * [`Object.assign`](https://mdn.io/Object/assign).
+ *
+ * @static
+ * @memberOf _
+ * @since 0.10.0
+ * @category Object
+ * @param {Object} object The destination object.
+ * @param {...Object} [sources] The source objects.
+ * @returns {Object} Returns `object`.
+ * @see _.assignIn
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ * }
+ *
+ * function Bar() {
+ *   this.c = 3;
+ * }
+ *
+ * Foo.prototype.b = 2;
+ * Bar.prototype.d = 4;
+ *
+ * _.assign({ 'a': 0 }, new Foo, new Bar);
+ * // => { 'a': 1, 'c': 3 }
+ */
+var assign = createAssigner(function(object, source) {
+  if (nonEnumShadows || isPrototype(source) || isArrayLike(source)) {
+    copyObject(source, keys(source), object);
+    return;
+  }
+  for (var key in source) {
+    if (hasOwnProperty.call(source, key)) {
+      assignValue(object, key, source[key]);
+    }
+  }
+});
+
+/**
+ * Creates an array of the own enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects. See the
+ * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * for more details.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keys(new Foo);
+ * // => ['a', 'b'] (iteration order is not guaranteed)
+ *
+ * _.keys('hi');
+ * // => ['0', '1']
+ */
+function keys(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+}
+
+module.exports = assign;
+
+},{}],3:[function(require,module,exports){
 'use strict';
 
 
@@ -350,7 +1077,7 @@ Mimoza.isText = function _isText(mimeType) {
   return builtin.isText(mimeType);
 };
 
-},{"mime-db":4}],3:[function(require,module,exports){
+},{"mime-db":5}],4:[function(require,module,exports){
 module.exports={
   "application/1d-interleaved-parityfec": {
     "source": "iana"
@@ -6927,7 +7654,7 @@ module.exports={
   }
 }
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
@@ -6940,5 +7667,5 @@ module.exports={
 
 module.exports = require('./db.json')
 
-},{"./db.json":3}]},{},[1])(1)
+},{"./db.json":4}]},{},[1])(1)
 });

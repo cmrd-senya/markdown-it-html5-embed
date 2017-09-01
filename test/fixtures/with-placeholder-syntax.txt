@@ -1,0 +1,20 @@
+
+.
+[test link](https://example.com/file.webm)
+
+[[html5media]]
+.
+<p><a href="https://example.com/file.webm">test link</a></p>
+<video controls preload="metadata">
+<source type="video/webm" src="https://example.com/file.webm"></source>
+test link
+</video>
+.
+
+.
+plain text
+
+[[html5media]]
+.
+<p>plain text</p>
+.
