@@ -174,6 +174,14 @@ Default:
     },
 ```
 
+#### autoAppend
+
+Boolean. In inline mode, whether to append media embeds automatically or not.
+
+If true, linked media files are embedded at the end of the post.
+
+Default: `false`.
+
 #### embedPlaceDirectiveRegexp
 
 Regexp. Regular expression for the directive which is used to set the place for media embeds in case of non-inline embedding. 
