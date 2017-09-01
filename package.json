@@ -1,7 +1,7 @@
 {
   "name": "markdown-it-html5-embed",
-  "version": "0.3.3",
-  "description": "This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way using image embedding syntax ![](url). This is done by replacing standard image renderer of markdown-it.",
+  "version": "0.4.0",
+  "description": "This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way, by using <video>/<audio> tags.",
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha"
