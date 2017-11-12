@@ -22,8 +22,7 @@
   },
   "dependencies": {
     "markdown-it": "^8.4.0",
-    "mimoza": "~1.0.0",
-    "lodash.assign": "~4.2.0"
+    "mimoza": "~1.0.0"
   },
   "devDependencies": {
     "handlebars": "~4.0.10",
