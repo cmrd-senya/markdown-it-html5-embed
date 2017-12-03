@@ -273,7 +273,7 @@ an object like this as its only argument, and return a string:
 }
 ````
 
-The keys you need to support are defined in `/lib.index.js`. You can access the
+The keys you need to support are defined in `lib/index.js`. You can access the
 default messages, or the messages you passed via `options.messages`, through
 the `this` keyword within your translation function.
 
