@@ -152,9 +152,9 @@ describe('markdown-it-html5-embed with image syntax + custom translation fn', fu
   var env = { language: 'de' };
 
   // Pass along env to generated tests
-  md.orig_render = md.render;
+  md.origRender = md.render;
   md.render = function(input) {
-    return this.orig_render(input, env);
+    return this.origRender(input, env);
   };
 
   generate(path.join(__dirname, 'fixtures/image-syntax-with-translation.txt'), md);
