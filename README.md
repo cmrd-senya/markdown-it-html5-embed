@@ -24,7 +24,7 @@ var md = require('markdown-it')()
 
 md.render('![](http://example.com/file.webm)'); // => '<p><video width="320" height="240" class="audioplayer" controls>
                                                 // <source type="video/webm" src=https://example.com/file.webm></source>
-                                                // untitled video
+                                                // Fallback text (see below)
                                                 // </video></p>'
 ```
 
@@ -58,7 +58,10 @@ Rendered:
 ```html
 <p><video controls preload="metadata">
 <source type="video/webm" src="https://example.com/file.webm"></source>
-test link
+Your browser does not support playing HTML5 video. You can
+<a href="https://example.com/file.webm" download>download a copy of the video
+file</a> instead.
+Here is a description of the content: test link
 </video></p>
 ```
 
@@ -80,7 +83,9 @@ Rendered:
 ```html
 <p><video width="320" height="240" class="audioplayer" controls>
 <source type="video/webm" src="https://example.com/file.webm"></source>
-untitled video
+Your browser does not support playing HTML5 video. You can
+<a href="https://example.com/file.webm" download>download a copy of the video
+file</a> instead.
 </video></p>
 ```
 
@@ -111,7 +116,10 @@ Rendered:
 <p><a href="https://example.com/file.webm">test link</a></p>
 <video controls preload="metadata">
 <source type="video/webm" src="https://example.com/file.webm"></source>
-test link
+Your browser does not support playing HTML5 video. You can
+<a href="https://example.com/file.webm" download>download a copy of the video
+file</a> instead.
+Here is a description of the content: test link
 </video>
 ```
 
@@ -123,7 +131,7 @@ inline: false,
 autoAppend: true
 ```
 
-In this mode media files are embedded at the end of the rendered text without any specific directives. 
+In this mode media files are embedded at the end of the rendered text without any specific directives.
 
 This mode always uses link syntax.
 
@@ -138,7 +146,10 @@ Rendered:
 <p><a href="https://example.com/file.webm">test link</a></p>
 <video controls preload="metadata">
 <source type="video/webm" src="https://example.com/file.webm"></source>
-test link
+Your browser does not support playing HTML5 video. You can
+<a href="https://example.com/file.webm" download>download a copy of the video
+file</a> instead.
+Here is a description of the content: test link
 </video>
 ```
 
@@ -151,6 +162,12 @@ templateName: "media-embed_tpl"
 
 If you want to render media embed using Handlebars template, you can set `templateName` option and the plugin will try to find
 the template using global `HandlebarsTemplates` array and render using this template.    
+
+You can access the descriptive content (e.g., "test link" above) via the
+`{{title}}` variable. It will be set to "Untitled video" or "Untitled audio"
+if no title was set. You can access the fallback text ("Your browser does not
+support ...")  via the `{{fallback}}` variable. See below for how to
+customize/translate the text.
 
 ## Options reference
 
@@ -184,7 +201,7 @@ Default: `false`.
 
 #### embedPlaceDirectiveRegexp
 
-Regexp. Regular expression for the directive which is used to set the place for media embeds in case of non-inline embedding. 
+Regexp. Regular expression for the directive which is used to set the place for media embeds in case of non-inline embedding.
 
 Default: ```/^\[\[html5media\]\]/im```
 
@@ -234,6 +251,31 @@ Default: `true`.
 Boolean. Enables video/audio embed with ```[]()``` syntax.
 
 Default: `false`.
+
+#### messages
+
+Object. Override the built-in default fallback text. You can add translations as
+well, and load the translation by invoking `md.render` with a language
+environment variable, like so: `md.render('some text', { language: 'code' })`
+
+See `lib/index.js` for the default text in English.
+
+#### translateFn
+
+Object. Override the built-in translation function. The function has to process
+an object like this as its only argument, and return a string:
+
+````javascript
+{
+  messageKey: 'video not supported',
+  messageParam: 'somevideo.webm',
+  language: 'en'
+}
+````
+
+The keys you need to support are defined in `lib/index.js`. You can access the
+default messages, or the messages you passed via `options.messages`, through
+the `this` keyword within your translation function.
 
 ## Credits
 

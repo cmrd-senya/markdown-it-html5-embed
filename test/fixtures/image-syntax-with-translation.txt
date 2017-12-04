@@ -4,7 +4,7 @@ Video with image syntax:
 .
 <p><video width="320" height="240" class="audioplayer" controls>
 <source type="video/webm" src="https://example.com/file.webm"></source>
-Your browser does not support playing HTML5 video. You can <a href="https://example.com/file.webm" download>download a copy of the video file</a> instead.
+DU KANNST DIES NICHT ABSPIELEN ABER HERUNTERLADEN: https://example.com/file.webm
 </video></p>
 .
 
@@ -14,7 +14,7 @@ Audio with image syntax:
 .
 <p><audio width="320" controls class="audioplayer">
 <source type="audio/ogg" src="https://example.com/file.ogg"></source>
-Your browser does not support playing HTML5 audio. You can <a href="https://example.com/file.ogg" download>download a copy of the audio file</a> instead.
+DU KANNST DIES AUCH NICHT ABSPIELEN ABER HERUNTERLADEN: https://example.com/file.ogg
 </audio></p>
 .
 
@@ -31,7 +31,7 @@ Video with image syntax and title:
 .
 <p><video width="320" height="240" class="audioplayer" controls>
 <source type="video/webm" src="https://example.com/file.webm"></source>
-Your browser does not support playing HTML5 video. You can <a href="https://example.com/file.webm" download>download a copy of the video file</a> instead.
-Here is a description of the content: some fancy title
+DU KANNST DIES NICHT ABSPIELEN ABER HERUNTERLADEN: https://example.com/file.webm
+DIES KÖNNTE ENTHALTEN SEIN: some fancy title
 </video></p>
 .
