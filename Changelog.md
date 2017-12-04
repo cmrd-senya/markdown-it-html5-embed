@@ -1,3 +1,9 @@
+## 0.5.0
+
+- Don't depend on lodash anymore (#6)
+- Support for auxiliary strings translations (#7)
+- Don't render titles where inside audio/video tags fallback area (#7)
+
 ## 0.4.0
 
 - Introduced new non-inline mode with optional auto append feature
