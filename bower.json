@@ -16,7 +16,7 @@
     "markdown-it-plugin",
     "html5"
   ],
-  "license": "MIT",
+  "license": "MPLv2",
   "ignore": [
     "**/.*",
     "node_modules",

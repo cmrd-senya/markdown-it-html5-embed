@@ -16,7 +16,7 @@
     "html5"
   ],
   "author": "comrade Senya <senya@riseup.net>",
-  "license": "MIT",
+  "license": "MPLv2",
   "bugs": {
     "url": "https://github.com/cmrd-senya/markdown-it-html5-embed/issues"
   },
