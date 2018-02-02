@@ -237,6 +237,12 @@ Boolean. Embed media in-place if true, or at some specified place if false.
 
 Default: `true`.
 
+#### isAllowedHttp
+
+Boolean. When `true` embed media with `http://` schema in URLs. When `false` ignore and don't count as embeddable media.
+
+Default: `false`.
+
 #### isAllowedMimeType
 
 Function. If specified, allows to decided basing on the MIME type, wheter to embed element or not. If not, all audio/video content is embedded. In a web browser you can use following code to embed only supported media type:

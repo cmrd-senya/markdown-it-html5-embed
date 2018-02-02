@@ -2,6 +2,7 @@
 
 - Drop explicit support for Handlebars
 - Instead support overriding of a built-in render function
+- Allow enabling/disabling embeds with `http://` URLs. Default is disable.
 
 ## 0.5.0
 

@@ -178,3 +178,28 @@ describe('markdown-it-html5-embed with image syntax + custom translation fn', fu
 
   generate(path.join(__dirname, 'fixtures/image-syntax-with-translation.txt'), md);
 });
+
+describe('markdown-it-html5-embed with link syntax http link when http disabled', function() {
+  clearBindings();
+
+  var options = {
+    html5embed: {
+      useLinkSyntax: true
+    }
+  };
+
+  var md = require('markdown-it')().use(require('../lib'), options);
+  generate(path.join(__dirname, 'fixtures/link-syntax-http-disabled.txt'), md);
+});
+
+describe('markdown-it-html5-embed with link syntax http link when http disabled', function() {
+  var options = {
+    html5embed: {
+      useLinkSyntax: true,
+      isAllowedHttp: true
+    }
+  };
+
+  var md = require('markdown-it')().use(require('../lib'), options);
+  generate(path.join(__dirname, 'fixtures/link-syntax-http-enabled.txt'), md);
+});
