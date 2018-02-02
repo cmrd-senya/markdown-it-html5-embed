@@ -3,6 +3,11 @@
 var path = require('path');
 var generate = require('markdown-it-testgen');
 
+function clearBindings() {
+  // Don't re-use cached function with old bindings
+  delete require.cache[require.resolve('../lib')];
+}
+
 // For testing custom messages and translations
 var customMessages = {
   en: {
@@ -58,15 +63,28 @@ describe('markdown-it-html5-embed mime type filtering', function() {
 });
 
 describe('markdown-it-html5-embed with handlebars', function() {
-  before(function() {
-    var Handlebars = require("handlebars");
-    global.HandlebarsTemplates = { "template": Handlebars.compile("<h1>{{title}}</h1><div class=\"body\"><{{media_type}} {{attributes}}><source type=\"{{mimetype}}\" src=\"{{source_url}}\"/></{{media_type}}></div>") };
-  });
+  clearBindings();
+
+  var Handlebars = require("handlebars");
+  global.HandlebarsTemplates = { "template": Handlebars.compile("<h1>{{title}}</h1><div class=\"body\"><{{media_type}} {{attributes}}><source type=\"{{mimetype}}\" src=\"{{source_url}}\"/></{{media_type}}></div>") };
+
+  function handleBarsRenderFn(parsed, mediaAttributes) {
+    var attributes = mediaAttributes[parsed.mediaType];
+      return HandlebarsTemplates[this]({
+      media_type: parsed.mediaType,
+      attributes: attributes,
+      mimetype: parsed.mimeType,
+      source_url: parsed.url,
+      title: parsed.title,
+      fallback: parsed.fallback,
+      needs_cover: parsed.mediaType === "video"
+    });
+  }
 
   var option = {
     html5embed: {
       useLinkSyntax: true,
-      templateName: "template",
+      renderFn: handleBarsRenderFn.bind("template"),
       attributes: {
         "video": "",
         "audio": ""
@@ -77,6 +95,8 @@ describe('markdown-it-html5-embed with handlebars', function() {
   var md = require('markdown-it')().use(require('../lib'), option);
 
   generate(path.join(__dirname, 'fixtures/with-handlebars.txt'), md);
+
+  clearBindings();
 });
 
 describe("embedding with [[html5embed]] clause", function() {
@@ -115,8 +135,8 @@ describe('markdown-it-html5-embed with image syntax + custom messages', function
       messages: customMessages
     }
   };
-  // Don't re-use cached function with old bindings
-  delete require.cache[require.resolve('../lib')];
+
+  clearBindings();
 
   var md = require('markdown-it')().use(require('../lib'), option);
   generate(path.join(__dirname, 'fixtures/image-syntax-custom-messages.txt'), md);
@@ -145,8 +165,7 @@ describe('markdown-it-html5-embed with image syntax + custom translation fn', fu
     }
   };
 
-  // Don't re-use cached function with old bindings
-  delete require.cache[require.resolve('../lib')];
+  clearBindings();
 
   var md = require('markdown-it')().use(require('../lib'), option);
   var env = { language: 'de' };

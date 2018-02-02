@@ -1,5 +1,5 @@
 # markdown-it-html5-embed
-This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way, by using <video>/<audio> tags.
+This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way, by using `<video>`/`<audio>` tags.
 
 ## Install
 
@@ -153,21 +153,47 @@ Here is a description of the content: test link
 </video>
 ```
 
-### Handlebars templates
+### Alternative render functions
 
 Options:
 ```js
-templateName: "media-embed_tpl"
+renderFn: function(properties, attributes) {/* ... */}
 ```
 
-If you want to render media embed using Handlebars template, you can set `templateName` option and the plugin will try to find
-the template using global `HandlebarsTemplates` array and render using this template.    
+By default the plugin renders media with just plain html media tags. However you may want to customize media rendering appropriate for your front-end framework or approach.
+
+You can do this by defining a custom rendering function.
+
+For example, here is a function you can use to render a media embed with Handlebars:
+
+```js
+function handleBarsRenderFn(properties, attributes) {
+    return HandlebarsTemplates[this]({
+    media_type: properties.mediaType,
+    attributes: attributes,
+    mimetype: properties.mimeType,
+    source_url: properties.url,
+    title: properties.title,
+    fallback: properties.fallback,
+    needs_cover: properties.mediaType === "video"
+  });
+}
+```
 
 You can access the descriptive content (e.g., "test link" above) via the
 `{{title}}` variable. It will be set to "Untitled video" or "Untitled audio"
 if no title was set. You can access the fallback text ("Your browser does not
 support ...")  via the `{{fallback}}` variable. See below for how to
 customize/translate the text.
+
+Then you can just set this function as a `renderFn` option on the plugin initialization:
+
+```js
+// ... options setting code ...
+renderFn: handleBarsRenderFn.bind("templateName"),
+```
+
+More on render function arguments see at the [`renderFn`](#renderFn) option description.
 
 ## Options reference
 
@@ -232,13 +258,27 @@ The argument is a result of regexp match, and has a structure similar to that on
 
 Default: `undefined`, allow everything.
 
-#### templateName
+#### renderFn
 
-String. If the plugin is used in a Rails asset pipeline along with the handlebars_assets gem, then you can use a Handlebars template to control the output of the plugin. This option specifies the name of the template to use, which will be picked from the HandlebarsTemplates array.
+Function. Override the built-in render function. The function accepts exactly 2 arguments.
 
-If HandlebarsTemplates is undefined, this option is ignored.
+```js
+function customRenderFn(properties, attributes) { /* ... */ }
+```
 
-Default: `undefined`, don't use Handlebars.
+`properties` is an `Object` which contains properties of a detected and parsed media reference. `properties` `Object` contains following keys:
+
+key|type|meaning
+-|-
+fallback|String|Fallback text for the case when the client (e.g. browser) doesn't support HTML5 `<audio>`/`<video>`
+mediaType|String|`"video"` or `"audio"`
+mimeType|String|Media mime type resolved by a URL ending (media file extension)
+title|String|Title for the media (which could be optionally provided in the markup)
+url|String|Media URL
+
+`attributes` is the attributes passed from the plugin options, see [`attributes`](#attributes) option description.
+
+A custom render function must return a `String` value which contains HTML for embedding at the appropriate place.
 
 #### useImageSyntax
 

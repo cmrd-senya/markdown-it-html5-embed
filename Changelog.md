@@ -1,3 +1,8 @@
+## Next release
+
+- Drop explicit support for Handlebars
+- Instead support overriding of a built-in render function
+
 ## 0.5.0
 
 - Don't depend on lodash anymore (#6)
