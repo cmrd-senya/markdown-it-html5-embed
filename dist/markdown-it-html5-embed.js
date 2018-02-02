@@ -1,5 +1,5 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.markdownitHTML5Embed = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*! markdown-it-html5-embed https://github.com/cmrd-senya/markdown-it-html5-embed @license MIT */
+/*! markdown-it-html5-embed https://github.com/cmrd-senya/markdown-it-html5-embed @license MPLv2 */
 // This is a plugin for markdown-it which adds support for embedding audio/video in the HTML5 way.
 
 'use strict';
@@ -16,7 +16,7 @@ var Mimoza = require('mimoza');
 // you have to provide a translation function via options.translateFn.
 //
 // The "untitled video" / "untitled audio" messages are only relevant to usage
-// inside Handlebars templates, where you can access the title between [] as
+// inside alternative render functions, where you can access the title between [] as
 // {{title}}, and this text is used if no title is provided.
 var messages = {
   en: {
@@ -70,7 +70,7 @@ function parseToken(tokens, idx, env) {
   }
 
   if (parsed.mediaType !== null) {
-    // For use as titles in handlebars templates, we store the description
+    // For use as titles in alternative render functions, we store the description
     // in parsed.title. For use as fallback text, we store it in parsed.fallback
     // alongside the standard fallback text.
     parsed.fallback = translate({
@@ -100,41 +100,31 @@ function isAllowedMimeType(parsed, options) {
     (!options.isAllowedMimeType || options.isAllowedMimeType([parsed.mimeType, parsed.mediaType]));
 }
 
-function renderMediaEmbed(parsed, options) {
-  var attributes = options.attributes[parsed.mediaType];
-  var useHandlebars = false;
-
-  if (options.templateName) {
-    if (typeof HandlebarsTemplates === "undefined") {
-      console.log("handlebars_assets is not on the assets pipeline; fall back to the usual mode");
-    } else {
-      useHandlebars = true;
-    }
+function isAllowedSchema(parsed, options) {
+  if (!options.isAllowedHttp && parsed.url.match('^http://')) {
+    return false;
   }
+  return true;
+}
 
-  if (useHandlebars) {
-    return HandlebarsTemplates[options.templateName]({
-      media_type: parsed.mediaType,
-      attributes: attributes,
-      mimetype: parsed.mimeType,
-      source_url: parsed.url,
-      title: parsed.title,
-      fallback: parsed.fallback,
-      needs_cover: parsed.mediaType === "video"
-    });
-  } else {
-    return ['<' + parsed.mediaType + ' ' + attributes + '>',
-      '<source type="' + parsed.mimeType + '" src="' + parsed.url + '"></source>',
-      parsed.fallback,
-      '</' + parsed.mediaType + '>'
-    ].join('\n');
-  }
+function isAllowedToEmbed(parsed, options) {
+  return isAllowedMimeType(parsed, options) && isAllowedSchema(parsed, options);
+}
+
+function renderMediaEmbed(parsed, mediaAttributes) {
+  var attributes = mediaAttributes[parsed.mediaType];
+
+  return ['<' + parsed.mediaType + ' ' + attributes + '>',
+    '<source type="' + parsed.mimeType + '" src="' + parsed.url + '"></source>',
+    parsed.fallback,
+    '</' + parsed.mediaType + '>'
+  ].join('\n');
 }
 
 function html5EmbedRenderer(tokens, idx, options, env, renderer, defaultRender) {
   var parsed = parseToken(tokens, idx, env);
 
-  if (!isAllowedMimeType(parsed, options.html5embed)) {
+  if (!isAllowedToEmbed(parsed, options.html5embed)) {
     return defaultRender(tokens, idx, options, env, renderer);
   }
 
@@ -142,7 +132,7 @@ function html5EmbedRenderer(tokens, idx, options, env, renderer, defaultRender) 
     clearTokens(tokens, idx + 1);
   }
 
-  return renderMediaEmbed(parsed, options.html5embed);
+  return renderMediaEmbed(parsed, options.html5embed.attributes);
 }
 
 function forEachLinkOpen(state, action) {
@@ -241,11 +231,11 @@ module.exports = function html5_embed_plugin(md, options) {
       forEachLinkOpen(gstate, function(tokens, idx) {
         var parsed = parseToken(tokens, idx, env);
 
-        if (!isAllowedMimeType(parsed, options)) {
+        if (!isAllowedToEmbed(parsed, options)) {
           return;
         }
 
-        result += renderMediaEmbed(parsed, options);
+        result += renderMediaEmbed(parsed, options.attributes);
       });
       if (result.length) {
         result += "\n";
@@ -291,6 +281,10 @@ module.exports = function html5_embed_plugin(md, options) {
   translate = typeof options.translateFn == 'function' ?
     options.translateFn.bind(options.messages) :
     translate.bind(options.messages);
+
+  if (typeof options.renderFn == 'function') {
+    renderMediaEmbed = options.renderFn;
+  }
 };
 
 },{"mimoza":2}],2:[function(require,module,exports){

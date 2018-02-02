@@ -1,4 +1,4 @@
-## Next release
+## 1.0.0
 
 - Drop explicit support for Handlebars
 - Instead support overriding of a built-in render function
