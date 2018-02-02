@@ -1,0 +1,20 @@
+PATH
+  remote: .
+  specs:
+    markdown-it-html5-embed (1.0.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (12.3.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.16)
+  markdown-it-html5-embed!
+  rake (~> 12)
+
+BUNDLED WITH
+   1.16.1

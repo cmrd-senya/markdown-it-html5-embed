@@ -1,1 +1,5 @@
 *~
+lib/assets/javascripts/markdown-it-html5-embed.js
+.idea
+pkg/
+node_modules/
