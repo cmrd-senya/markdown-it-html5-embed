@@ -21,7 +21,7 @@
     "url": "https://github.com/cmrd-senya/markdown-it-html5-embed/issues"
   },
   "dependencies": {
-    "markdown-it": "^8.4.0",
+    "markdown-it": "^12.3.2",
     "mimoza": "~1.0.0"
   },
   "devDependencies": {
