@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "markdown-it-html5-embed"
-  spec.version       = "1.0.0"
+  spec.version       = "1.1.0"
   spec.authors       = ["cmrd Senya"]
   spec.email         = ["senya@riseup.net"]
 
@@ -12,6 +12,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.license       = "MPL-2.0"
 
-  spec.add_development_dependency "bundler", "~> 1.16"
-  spec.add_development_dependency "rake", "~> 12"
+  spec.add_development_dependency "bundler", ">= 1.16"
+  spec.add_development_dependency "rake", ">= 12"
 end
