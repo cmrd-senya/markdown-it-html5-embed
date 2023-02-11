@@ -1,3 +1,8 @@
+## 1.1.0
+
+- Move markdown-it to peerDependencies
+- Allow using markdown-it 13.0.x in addition to 12.3.x
+
 ## 1.0.0
 
 - Drop explicit support for Handlebars
